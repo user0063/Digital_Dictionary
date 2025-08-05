@@ -163,17 +163,3 @@ def bookmark_word(request, word_id):
         Bookmark.objects.get_or_create(user=request.user, word=word)
         return JsonResponse({'message': 'Bookmarked successfully'})
     return JsonResponse({'error': 'Invalid request'}, status=400)
-
-from django.contrib.auth import get_user_model
-from django.http import HttpResponse
-
-def create_admin_user(request):
-    User = get_user_model()
-    if not User.objects.filter(email="admin@example.com").exists():
-        User.objects.create_superuser(
-            email="admin@example.com",
-            name="Admin",
-            password="your_secure_password"
-        )
-        return HttpResponse("Superuser created")
-    return HttpResponse("Superuser already exists")
