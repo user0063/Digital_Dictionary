@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: visual-dictionary
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+    startCommand: gunicorn visual_dictionary.wsgi:application --workers 1 --threads 2

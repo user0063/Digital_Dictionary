@@ -1,0 +1,114 @@
+{% extends "base.html" %} {% block content %}
+
+<div class="container mt-4">
+  <h2 class="mb-4">Welcome, {{ request.user.name }}!</h2>
+
+  <!-- 🔍 Search Form -->
+  <form method="post" class="mb-4">
+    {% csrf_token %}
+    <div class="input-group">
+      <input
+        type="text"
+        name="word"
+        placeholder="Enter a word"
+        class="form-control"
+        required
+      />
+      <button class="btn btn-success" type="submit">Search</button>
+    </div>
+  </form>
+
+  <!-- ❌ Error -->
+  {% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <!-- ✅ Word of the Day Section -->
+  {% if word_of_the_day and not word %}
+  <div class="card p-3 mb-4">
+    <h3 class="card-title">
+      🌟 Word of the Day: {{ word_of_the_day.word|capfirst }}
+    </h3>
+
+    {% if word_of_the_day.pronunciation %}
+    <audio controls class="mb-2">
+      <source src="{{ word_of_the_day.pronunciation }}" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+    {% endif %} {% if word_of_the_day.image_url %}
+    <img
+      src="{{ word_of_the_day.image_url }}"
+      alt="Image"
+      class="img-fluid mb-3 rounded"
+      style="width: 300px; height: 200px; object-fit: cover"
+    />
+    {% endif %}
+
+    <h4>Meanings:</h4>
+    <ul class="list-group">
+      {% for meaning in word_of_the_day.get_meanings %}
+      <li class="list-group-item">
+        <strong>{{ meaning.part_of_speech|capfirst }}</strong><br />
+        {{ meaning.definition }}<br />
+        <i>Tamil:</i> {{ meaning.definition_ta }}<br />
+
+        {% if meaning.example %}
+        <b>Example:</b> {{ meaning.example }}<br />
+        {% endif %} {% if meaning.synonyms %}
+        <b>Synonyms:</b> {{ meaning.synonyms|join:", " }}<br />
+        {% endif %} {% if meaning.antonyms %}
+        <b>Antonyms:</b> {{ meaning.antonyms|join:", " }}<br />
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- 🔍 Search Result Word -->
+  {% if word %}
+  <div class="card p-3 mb-4">
+    <h3 class="card-title">{{ word.word|capfirst }}</h3>
+
+    <form action="{% url 'add_bookmark' word.id %}" method="post" class="mb-2">
+      {% csrf_token %}
+      <button class="btn btn-outline-primary btn-sm">Bookmark</button>
+    </form>
+
+    {% if word.pronunciation %}
+    <audio controls class="mb-2">
+      <source src="{{ word.pronunciation }}" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+    {% endif %} {% if word.image_url %}
+    <img
+      src="{{ word.image_url }}"
+      alt="Image"
+      class="img-fluid mb-3 rounded"
+      style="width: 300px; height: 200px; object-fit: cover"
+    />
+    {% endif %}
+
+    <h4>Meanings:</h4>
+    <ul class="list-group">
+      {% for meaning in word.get_meanings %}
+      <li class="list-group-item">
+        <strong>{{ meaning.part_of_speech|capfirst }}</strong><br />
+        {{ meaning.definition }}<br />
+        <i>Tamil:</i> {{ meaning.definition_ta }}<br />
+
+        {% if meaning.example %}
+        <b>Example:</b> {{ meaning.example }}<br />
+        {% endif %} {% if meaning.synonyms %}
+        <b>Synonyms:</b> {{ meaning.synonyms|join:", " }}<br />
+        {% endif %} {% if meaning.antonyms %}
+        <b>Antonyms:</b> {{ meaning.antonyms|join:", " }}<br />
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
