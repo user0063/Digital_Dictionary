@@ -1,114 +1,403 @@
 {% extends "base.html" %} {% block content %}
+<link
+  href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil&display=swap"
+  rel="stylesheet"
+/>
+<style>
+  body {
+    font-family: "Noto Sans Tamil", Arial, sans-serif;
+  }
+</style>
+<style>
+  /* Optional: Custom styles for a sleeker audio player */
+  audio {
+    filter: sepia(20%) saturate(70%) grayscale(1) contrast(99%) invert(12%);
+    width: 250px;
+    height: 40px;
+  }
+  .bookmark-btn {
+    transition: all 0.2s ease-in-out;
+  }
+</style>
+<style>
+  body {
+    font-family: "Noto Sans Tamil", "Latha", "Arial Unicode MS", sans-serif;
+  }
+</style>
 
-<div class="container mt-4">
-  <h2 class="mb-4">Welcome, {{ request.user.name }}!</h2>
-
-  <!-- 🔍 Search Form -->
-  <form method="post" class="mb-4">
-    {% csrf_token %}
-    <div class="input-group">
-      <input
-        type="text"
-        name="word"
-        placeholder="Enter a word"
-        class="form-control"
-        required
-      />
-      <button class="btn btn-success" type="submit">Search</button>
+<div class="container my-4">
+  <div class="p-5 mb-4 bg-light rounded-3 shadow-sm">
+    <div class="container-fluid py-5">
+      <h1 class="display-5 fw-bold">Welcome, {{ request.user.name }}!</h1>
+      <p class="col-md-8 fs-4">
+        Explore words, discover meanings, and expand your vocabulary.
+      </p>
+      <form method="post" class="mt-4">
+        {% csrf_token %}
+        <div class="input-group input-group-lg">
+          <input
+            type="text"
+            name="word"
+            placeholder="What word are you looking for?"
+            class="form-control"
+            required
+            autofocus
+          />
+          <button class="btn btn-primary" type="submit" id="button-addon2">
+            <i class="bi bi-search me-2"></i>Search
+          </button>
+        </div>
+      </form>
     </div>
-  </form>
-
-  <!-- ❌ Error -->
-  {% if error %}
-  <div class="alert alert-danger">{{ error }}</div>
-  {% endif %}
-
-  <!-- ✅ Word of the Day Section -->
-  {% if word_of_the_day and not word %}
-  <div class="card p-3 mb-4">
-    <h3 class="card-title">
-      🌟 Word of the Day: {{ word_of_the_day.word|capfirst }}
-    </h3>
-
-    {% if word_of_the_day.pronunciation %}
-    <audio controls class="mb-2">
-      <source src="{{ word_of_the_day.pronunciation }}" type="audio/mpeg" />
-      Your browser does not support the audio element.
-    </audio>
-    {% endif %} {% if word_of_the_day.image_url %}
-    <img
-      src="{{ word_of_the_day.image_url }}"
-      alt="Image"
-      class="img-fluid mb-3 rounded"
-      style="width: 300px; height: 200px; object-fit: cover"
-    />
-    {% endif %}
-
-    <h4>Meanings:</h4>
-    <ul class="list-group">
-      {% for meaning in word_of_the_day.get_meanings %}
-      <li class="list-group-item">
-        <strong>{{ meaning.part_of_speech|capfirst }}</strong><br />
-        {{ meaning.definition }}<br />
-        <i>Tamil:</i> {{ meaning.definition_ta }}<br />
-
-        {% if meaning.example %}
-        <b>Example:</b> {{ meaning.example }}<br />
-        {% endif %} {% if meaning.synonyms %}
-        <b>Synonyms:</b> {{ meaning.synonyms|join:", " }}<br />
-        {% endif %} {% if meaning.antonyms %}
-        <b>Antonyms:</b> {{ meaning.antonyms|join:", " }}<br />
-        {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
   </div>
-  {% endif %}
 
-  <!-- 🔍 Search Result Word -->
-  {% if word %}
-  <div class="card p-3 mb-4">
-    <h3 class="card-title">{{ word.word|capfirst }}</h3>
+  {% if error %}
+  <div class="alert alert-danger d-flex align-items-center" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <div>{{ error }}</div>
+  </div>
+  {% endif %} {% if word_of_the_day and not word %}
+  <div class="card shadow border-0 rounded-4 overflow-hidden mb-5">
+    <div
+      class="card-header bg-dark bg-gradient text-white p-4 d-flex justify-content-between align-items-center"
+    >
+      <h2 class="mb-0">
+        <i class="bi bi-book-half me-2"></i> 🌟 Word of the Day:
+        <strong>{{ word_of_the_day.word|capfirst }}</strong>
+      </h2>
+      <button
+        class="btn btn-lg bookmark-btn {% if wotd_is_bookmarked %}btn-warning{% else %}btn-outline-warning{% endif %}"
+        data-word-id="{{ word_of_the_day.id }}"
+        data-action-url="{% if wotd_is_bookmarked %}{% url 'unbookmark_word' word_of_the_day.id %}{% else %}{% url 'bookmark_word' word_of_the_day.id %}{% endif %}"
+      >
+        <i
+          class="bi {% if wotd_is_bookmarked %}bi-bookmark-star-fill{% else %}bi-bookmark-star{% endif %}"
+        ></i>
+      </button>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          {% if word_of_the_day.image_url %}
+          <img
+            src="{{ word_of_the_day.image_url }}"
+            alt="Image for {{ word_of_the_day.word }}"
+            class="img-fluid rounded-3 shadow-sm mb-3"
+            style="width: 100%; height: 250px; object-fit: cover"
+          />
+          {% else %}
+          <div
+            class="d-flex align-items-center justify-content-center bg-light rounded-3"
+            style="width: 100%; height: 250px"
+          >
+            <i class="bi bi-image-alt fs-1 text-muted"></i>
+          </div>
+          {% endif %} {% if word_of_the_day.pronunciation %}
+          <div class="d-flex align-items-center">
+            <i class="bi bi-volume-up-fill fs-4 me-2 text-primary"></i>
+            <audio controls>
+              <source
+                src="{{ word_of_the_day.pronunciation }}"
+                type="audio/mpeg"
+              />
+              Your browser does not support audio.
+            </audio>
+          </div>
+          {% endif %}
+        </div>
 
-    <form action="{% url 'add_bookmark' word.id %}" method="post" class="mb-2">
-      {% csrf_token %}
-      <button class="btn btn-outline-primary btn-sm">Bookmark</button>
-    </form>
+        <div class="col-lg-8">
+          <div
+            class="alert alert-info bg-info-subtle border-info-subtle rounded-3 p-3 mb-4"
+          >
+            <h5 class="alert-heading">
+              <i class="bi bi-chat-right-quote-fill me-2"></i>Summary
+            </h5>
+            <p class="mb-0">{{ word_of_the_day.get_summary }}</p>
+          </div>
+          <div class="accordion" id="meaningsAccordionWotd">
+            {% for meaning in word_of_the_day.get_meanings %}
+            <div class="accordion-item">
+              <h2
+                class="accordion-header"
+                id="heading-wotd-{{ forloop.counter }}"
+              >
+                <button
+                  class="accordion-button {% if not forloop.first %}collapsed{% endif %}"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapse-wotd-{{ forloop.counter }}"
+                >
+                  <strong class="text-primary"
+                    >{{ meaning.part_of_speech|capfirst }}</strong
+                  >
+                </button>
+              </h2>
+              <div
+                id="collapse-wotd-{{ forloop.counter }}"
+                class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                data-bs-parent="#meaningsAccordionWotd"
+              >
+                <div class="accordion-body">
+                  <p class="fs-5">{{ meaning.definition }}</p>
+                  <p
+                    class="fs-6 text-muted border-start border-4 border-success ps-3"
+                  >
+                    {{ meaning.definition_ta }}
+                  </p>
+                  {% if meaning.example %}
+                  <figure>
+                    <blockquote class="blockquote">
+                      <p>"{{ meaning.example }}"</p>
+                    </blockquote>
+                    <figcaption class="blockquote-footer">Example</figcaption>
+                  </figure>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
 
-    {% if word.pronunciation %}
-    <audio controls class="mb-2">
-      <source src="{{ word.pronunciation }}" type="audio/mpeg" />
-      Your browser does not support the audio element.
-    </audio>
-    {% endif %} {% if word.image_url %}
-    <img
-      src="{{ word.image_url }}"
-      alt="Image"
-      class="img-fluid mb-3 rounded"
-      style="width: 300px; height: 200px; object-fit: cover"
-    />
-    {% endif %}
+      <hr class="my-4" />
+      <div class="row">
+        <div class="col-md-6">
+          <h5>
+            <i class="bi bi-arrow-right-circle-fill text-success me-2"></i
+            >Synonyms
+          </h5>
+          {% for synonym in word_of_the_day.get_synonyms %}
+          <span
+            class="badge bg-success-subtle text-success-emphasis rounded-pill fs-6 fw-normal m-1 p-2"
+            >{{ synonym }}</span
+          >
+          {% empty %}
+          <p class="text-muted">No synonyms found.</p>
+          {% endfor %}
+        </div>
+        <div class="col-md-6">
+          <h5>
+            <i class="bi bi-arrow-left-circle-fill text-danger me-2"></i
+            >Antonyms
+          </h5>
+          {% for antonym in word_of_the_day.get_antonyms %}
+          <span
+            class="badge bg-danger-subtle text-danger-emphasis rounded-pill fs-6 fw-normal m-1 p-2"
+            >{{ antonym }}</span
+          >
+          {% empty %}
+          <p class="text-muted">No antonyms found.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %} {% if word %}
+  <div class="card shadow border-0 rounded-4 overflow-hidden mb-5">
+    <div
+      class="card-header bg-dark bg-gradient text-white p-4 d-flex justify-content-between align-items-center"
+    >
+      <h2 class="mb-0">
+        <i class="bi bi-book-half me-2"></i> Search Result:
+        <strong>{{ word.word|capfirst }}</strong>
+      </h2>
+      <button
+        class="btn btn-lg bookmark-btn {% if word_is_bookmarked %}btn-warning{% else %}btn-outline-warning{% endif %}"
+        data-word-id="{{ word.id }}"
+        data-action-url="{% if word_is_bookmarked %}{% url 'unbookmark_word' word.id %}{% else %}{% url 'bookmark_word' word.id %}{% endif %}"
+      >
+        <i
+          class="bi {% if word_is_bookmarked %}bi-bookmark-star-fill{% else %}bi-bookmark-star{% endif %}"
+        ></i>
+      </button>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          {% if word.image_url %}
+          <img
+            src="{{ word.image_url }}"
+            alt="Image for {{ word.word }}"
+            class="img-fluid rounded-3 shadow-sm mb-3"
+            style="width: 100%; height: 250px; object-fit: cover"
+          />
+          {% else %}
+          <div
+            class="d-flex align-items-center justify-content-center bg-light rounded-3"
+            style="width: 100%; height: 250px"
+          >
+            <i class="bi bi-image-alt fs-1 text-muted"></i>
+          </div>
+          {% endif %} {% if word.pronunciation %}
+          <div class="d-flex align-items-center">
+            <i class="bi bi-volume-up-fill fs-4 me-2 text-primary"></i>
+            <audio controls>
+              <source src="{{ word.pronunciation }}" type="audio/mpeg" />
+              Your browser does not support audio.
+            </audio>
+          </div>
+          {% endif %}
+        </div>
 
-    <h4>Meanings:</h4>
-    <ul class="list-group">
-      {% for meaning in word.get_meanings %}
-      <li class="list-group-item">
-        <strong>{{ meaning.part_of_speech|capfirst }}</strong><br />
-        {{ meaning.definition }}<br />
-        <i>Tamil:</i> {{ meaning.definition_ta }}<br />
+        <div class="col-lg-8">
+          <div
+            class="alert alert-info bg-info-subtle border-info-subtle rounded-3 p-3 mb-4"
+          >
+            <h5 class="alert-heading">
+              <i class="bi bi-chat-right-quote-fill me-2"></i>Summary
+            </h5>
+            <p class="mb-0">{{ word.get_summary }}</p>
+          </div>
+          <div class="accordion" id="meaningsAccordionSearch">
+            {% for meaning in word.get_meanings %}
+            <div class="accordion-item">
+              <h2
+                class="accordion-header"
+                id="heading-search-{{ forloop.counter }}"
+              >
+                <button
+                  class="accordion-button {% if not forloop.first %}collapsed{% endif %}"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapse-search-{{ forloop.counter }}"
+                >
+                  <strong class="text-primary"
+                    >{{ meaning.part_of_speech|capfirst }}</strong
+                  >
+                </button>
+              </h2>
+              <div
+                id="collapse-search-{{ forloop.counter }}"
+                class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                data-bs-parent="#meaningsAccordionSearch"
+              >
+                <div class="accordion-body">
+                  <p class="fs-5">{{ meaning.definition }}</p>
+                  <p
+                    class="fs-6 text-muted border-start border-4 border-success ps-3"
+                  >
+                    {{ meaning.definition_ta }}
+                  </p>
+                  {% if meaning.example %}
+                  <figure>
+                    <blockquote class="blockquote">
+                      <p>"{{ meaning.example }}"</p>
+                    </blockquote>
+                    <figcaption class="blockquote-footer">Example</figcaption>
+                  </figure>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
 
-        {% if meaning.example %}
-        <b>Example:</b> {{ meaning.example }}<br />
-        {% endif %} {% if meaning.synonyms %}
-        <b>Synonyms:</b> {{ meaning.synonyms|join:", " }}<br />
-        {% endif %} {% if meaning.antonyms %}
-        <b>Antonyms:</b> {{ meaning.antonyms|join:", " }}<br />
-        {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
+      <hr class="my-4" />
+      <div class="row">
+        <div class="col-md-6">
+          <h5>
+            <i class="bi bi-arrow-right-circle-fill text-success me-2"></i
+            >Synonyms
+          </h5>
+          {% for synonym in word.get_synonyms %}
+          <span
+            class="badge bg-success-subtle text-success-emphasis rounded-pill fs-6 fw-normal m-1 p-2"
+            >{{ synonym }}</span
+          >
+          {% empty %}
+          <p class="text-muted">No synonyms found.</p>
+          {% endfor %}
+        </div>
+        <div class="col-md-6">
+          <h5>
+            <i class="bi bi-arrow-left-circle-fill text-danger me-2"></i
+            >Antonyms
+          </h5>
+          {% for antonym in word.get_antonyms %}
+          <span
+            class="badge bg-danger-subtle text-danger-emphasis rounded-pill fs-6 fw-normal m-1 p-2"
+            >{{ antonym }}</span
+          >
+          {% empty %}
+          <p class="text-muted">No antonyms found.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
   </div>
   {% endif %}
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const bookmarkButtons = document.querySelectorAll(".bookmark-btn");
+
+    // Function to get the CSRF token from cookies
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === name + "=") {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    const csrftoken = getCookie("csrftoken");
+
+    bookmarkButtons.forEach((button) => {
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
+
+        const wordId = this.dataset.wordId;
+        let actionUrl = this.dataset.actionUrl;
+        const isBookmarked = this.classList.contains("btn-warning");
+
+        // Send the request to the backend
+        fetch(actionUrl, {
+          method: "POST",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRFToken": csrftoken,
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status === "ok") {
+              // Update the button's appearance and action
+              const icon = this.querySelector("i");
+
+              if (isBookmarked) {
+                // It WAS bookmarked, now it is NOT
+                this.classList.remove("btn-warning");
+                this.classList.add("btn-outline-warning");
+                icon.classList.remove("bi-bookmark-star-fill");
+                icon.classList.add("bi-bookmark-star");
+                // Set the next action to be 'bookmark'
+                this.dataset.actionUrl = `/bookmark/${wordId}/`;
+              } else {
+                // It was NOT bookmarked, now it IS
+                this.classList.remove("btn-outline-warning");
+                this.classList.add("btn-warning");
+                icon.classList.remove("bi-bookmark-star");
+                icon.classList.add("bi-bookmark-star-fill");
+                // Set the next action to be 'unbookmark'
+                this.dataset.actionUrl = `/unbookmark/${wordId}/`;
+              }
+            }
+          })
+          .catch((error) => console.error("Error:", error));
+      });
+    });
+  });
+</script>
 
 {% endblock %}
